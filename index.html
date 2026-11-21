@@ -126,6 +126,22 @@ footer button.on{color:var(--acc)}
       <p><button onclick="addSched()">일정 등록</button></p>
     </section>
     <section class="card">
+      <h2>병원 찾기</h2>
+      <p class="muted">공공데이터(건강보험심사평가원) 목록 제공 — 병원 선택은 본인 판단이며,
+      앱이 특정 병원을 추천하지 않습니다. 자주 다니는 병원은 즐겨찾기(이 폰에만 저장)로
+      관리하세요.</p>
+      <label>지역</label>
+      <select id="h-sido"><option value="">선택</option></select>
+      <label>진료과</label>
+      <select id="h-dept"><option value="">전체</option></select>
+      <p><button onclick="findHospitals()">병원 검색</button></p>
+      <div id="hosp-list"></div>
+    </section>
+    <section class="card">
+      <h2>⭐ 자주 다니는 병원 (즐겨찾기)</h2>
+      <ul class="med" id="fav-list"></ul>
+    </section>
+    <section class="card">
       <h2>등록된 일정</h2>
       <ul class="med" id="sched-list"></ul>
     </section>
@@ -238,6 +254,77 @@ const GUIDES={
  '공통':[['농촌진흥청 국가음식성분표','https://kfr.rda.go.kr/'],['식품안전나라','https://www.foodsafetykorea.go.kr/']]
 };
 /* 출처 표기 법률 요구: 기관명·링크·확인일 (식단 법률 검토 2026-11-21) */
+/* ── 병원 찾기 (공공데이터 스냅샷 — same-origin fetch, 검색어 서버 전송 없음) ── */
+const SIDOS=[["110000","서울"],["210000","부산"],["220000","대구"],["230000","인천"],
+ ["240000","광주"],["250000","대전"],["260000","울산"],["270000","세종"],
+ ["310000","경기"],["320000","강원"],["330000","충북"],["340000","충남"],
+ ["350000","전북"],["360000","전남"],["370000","경북"],["380000","경남"],["390000","제주"]];
+const DEPTS=[["01","내과"],["02","신경과"],["03","정신건강의학과"],["04","외과"],
+ ["05","정형외과"],["08","성형외과"],["10","산부인과"],["11","소아청소년과"],
+ ["12","안과"],["13","이비인후과"],["14","피부과"],["15","비뇨의학과"],["28","가정의학과"]];
+const CL_NAME={"11":"의원","21":"병원","28":"종합병원"};
+
+function initHospFinder(){
+  $('h-sido').innerHTML='<option value="">선택</option>'+
+    SIDOS.map(s=>`<option value="${s[0]}">${s[1]}</option>`).join('');
+  $('h-dept').innerHTML='<option value="">전체</option>'+
+    DEPTS.map(d=>`<option value="${d[0]}">${d[1]}</option>`).join('');
+  renderFavs();
+}
+async function findHospitals(){
+  const sido=$('h-sido').value, dept=$('h-dept').value;
+  if(!sido){alert('지역을 선택하세요');return}
+  const box=$('hosp-list');
+  box.innerHTML='<p class="muted">불러오는 중…</p>';
+  try{
+    const res=await fetch('./hosp_'+sido+'.json');
+    if(!res.ok) throw new Error('데이터 파일 없음 (HTTP '+res.status+')');
+    const all=await res.json();
+    const rows=all.filter(x=>!dept||(x.g||[]).includes(dept));
+    const shown=rows.slice(0,50);
+    window._hospResults=shown;  /* 인덱스로 참조 — 이름을 속성에 넣지 않아 따옴표 깨짐 방지 */
+    box.innerHTML='<p class="muted">'+rows.length.toLocaleString()+'건'+(rows.length>50?' — 50건만 표시':'')+'</p>'+
+      shown.map((x,i)=>`<li class="med" style="list-style:none"><div>
+        <b>${esc(x.n)}</b> <span class="pill">${CL_NAME[x.c]||x.c}</span>
+        <div class="muted">${esc(x.a)}</div>
+        ${x.t?`<div class="time-chip">☎ ${esc(x.t)}</div>`:''}</div>
+        <div class="row" style="gap:4px">
+        <button class="small" style="width:auto" onclick="useForSchedIdx(${i})">일정으로</button>
+        <button class="small ghost" style="width:auto" onclick="favHospIdx(${i})">⭐</button></div></li>`).join('');
+  }catch(e){
+    box.innerHTML='<p class="muted">병원 데이터가 아직 준비되지 않았습니다. '+
+      '(활용신청·스냅샷 생성 후 제공 — 오류: '+esc(String(e.message||e).slice(0,60))+')</p>';
+  }
+}
+function useForSchedIdx(i){
+  const x=window._hospResults[i];if(!x)return;
+  $('s-hosp').value=x.n;
+  alert('병원 이름이 일정 등록에 채워졌습니다 — 일시를 입력하세요');
+}
+function favHospIdx(i){
+  const x=window._hospResults[i];if(!x)return;
+  DB.favs=DB.favs||[];
+  if(DB.favs.some(f=>f.name===x.n))return;
+  DB.favs.push({name:x.n,addr:x.a,tel:x.t||''});save();renderFavs();
+}
+function delFav(i){DB.favs.splice(i,1);save();renderFavs()}
+function renderFavs(){
+  DB.favs=DB.favs||[];
+  window._favs=DB.favs;  /* 인덱스 참조 — 따옴표 깨짐 방지 */
+  $('fav-list').innerHTML=DB.favs.length?DB.favs.map((f,i)=>
+    `<li><div><b>${esc(f.name)}</b><div class="muted">${esc(f.addr||'')}</div>
+     ${f.tel?`<div class="time-chip">☎ ${esc(f.tel)}</div>`:''}</div>
+     <div class="row" style="gap:4px">
+     <button class="small" style="width:auto" onclick="useForSchedName(${i})">일정으로</button>
+     <button class="small ghost" style="width:auto" onclick="delFav(${i})">삭제</button></div></li>`).join('')
+    :'<p class="muted">검색 후 ⭐로 즐겨찾기하세요 (이 폰에만 저장).</p>';
+}
+function useForSchedName(i){
+  const f=window._favs[i];if(!f)return;
+  $('s-hosp').value=f.name;
+  alert('병원 이름이 일정 등록에 채워졌습니다 — 일시를 입력하세요');
+}
+
 const GUIDE_CHECKED='2026-11-21';
 /* 광고 수익화 스위치 — 트래픽 확보 후 true로 전환(기본 광고 없음).
    정책: 민감정보 페이지(병력·서류·식단) 노출 금지, '광고' 표기 필수. */
@@ -466,6 +553,7 @@ setInterval(()=>{
 /* ── 공통 ── */
 function renderAll(){renderToday();renderMeds();renderSched();renderDocs();renderHealth();renderTags();renderGuides();renderMeals()}
 load();renderTimeChips();renderAll();
+initHospFinder();
 checkConsent();  /* 민감정보 별도 동의 확인 — 미동의 시 잠금 */
 
 /* PWA 등록 */
