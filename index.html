@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>복약 단골 — 복용약·진료 관리</title>
+<meta name="description" content="복용약 알림·병원 일정·서류 보관 — 모든 데이터는 내 폰에만 저장됩니다.">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f4c81">
+<style>
+:root{--bg:#0e1420;--card:#16202f;--line:#233248;--fg:#e8eef7;--sub:#9db0c9;--acc:#4da3ff;--warn:#ffb84d;--ok:#5fd08a;--bad:#ff7a7a}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"맑은 고딕","Apple SD Gothic Neo",sans-serif;background:var(--bg);color:var(--fg);min-height:100vh;padding-bottom:70px}
+header{padding:18px 16px 10px}
+h1{font-size:20px;font-weight:700}
+.h-sub{color:var(--sub);font-size:12px;margin-top:4px}
+.badge{display:inline-block;background:#1d2c42;color:var(--acc);font-size:11px;padding:3px 8px;border-radius:20px;margin-top:8px}
+main{padding:0 14px}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+h2{font-size:15px;margin-bottom:10px;color:var(--fg)}
+.muted{color:var(--sub);font-size:12px;line-height:1.5}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+input,select,textarea{background:#0c1220;border:1px solid var(--line);color:var(--fg);border-radius:10px;padding:10px;font-size:14px;width:100%}
+input:focus{outline:1px solid var(--acc)}
+label{font-size:12px;color:var(--sub);display:block;margin:8px 0 4px}
+button{background:var(--acc);color:#04121f;border:0;border-radius:10px;padding:11px 16px;font-size:14px;font-weight:700;cursor:pointer;width:100%}
+button.ghost{background:transparent;color:var(--acc);border:1px solid var(--line);font-weight:500}
+button.small{width:auto;padding:8px 12px;font-size:12px}
+ul.med{list-style:none}
+ul.med li{display:flex;justify-content:space-between;align-items:center;background:#101a29;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px}
+.done{opacity:.45;text-decoration:line-through}
+.pill{font-size:11px;border-radius:14px;padding:2px 8px;background:#22354f;color:var(--acc)}
+.time-chip{font-size:12px;color:var(--warn)}
+footer{position:fixed;bottom:0;left:0;right:0;background:#0b111c;border-top:1px solid var(--line);display:flex}
+footer button{background:none;color:var(--sub);font-size:11px;font-weight:600;padding:10px 0;border-radius:0}
+footer button.on{color:var(--acc)}
+.dialog{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center}
+.dialog.open{display:flex}
+.dialog>div{background:var(--card);width:100%;max-width:520px;border-radius:18px 18px 0 0;padding:16px;max-height:88vh;overflow:auto}
+.thumb{max-width:100%;border-radius:10px;margin-top:8px;border:1px solid var(--line)}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<!-- 첫 실행 동의 — 개인정보보호법 제23조(민감정보 별도 동의) 대응 -->
+<div class="dialog open" id="consent" style="z-index:99">
+  <div>
+    <h2 style="margin-bottom:10px">시작 전 동의</h2>
+    <p class="muted" style="line-height:1.7">
+    <b>1. 건강정보 처리 동의 (별도 동의)</b><br>
+    본 앱은 복용약·병력·알레르기 등 <b>개인정보보호법 제23조의 민감정보(건강정보)</b>를
+    다룹니다. 이 정보는 <b>이 기기에만</b> 저장되며 서버로 전송되지 않습니다. 동의하지
+    않으면 앱을 사용할 수 없습니다.<br><br>
+    <b>2. 의학 조언 아님</b><br>
+    본 앱의 알림·기록·일반 건강 정보는 <b>의학적 진단·치료를 대체하지 않습니다</b>.
+    약 복용·식단·치료 관련 판단은 반드시 의사·약사·임상영양사와 상담하세요.
+    앱은 복용을 강제하거나 용량을 조언하지 않습니다.<br><br>
+    <b>3. 데이터 보관·삭제</b><br>
+    데이터는 목적 달성 시까지 기기에 보관되며, 앱 데이터 삭제 시 즉시 파기됩니다.
+    백업 파일은 사용자 본인이 관리합니다.<br><br>
+    <b>4. 보험·기관 정보</b><br>
+    보험·기관 관련 정보는 공개 자료 안내에 그치며, 보험 가입 권유·청구 대행을 하지
+    않습니다.<br><br>
+    <b>5. 건강 태그(식단 지침 참조용)</b><br>
+    고혈압·당뇨 등 건강 태그는 <b>회원님이 직접 선택하는 일반 정보</b>입니다. 앱이 건강
+    상태를 진단·판정하지 않습니다. 태그는 민감정보(건강정보)로서 이 동의 후에만 저장되며,
+    설정에서 언제든 삭제할 수 있습니다.<br><br>
+    <b>6. 정보의 국외이전 (개인정보보호법 제28조의8)</b><br>
+    본 앱은 무료 정적 호스팅(예: GitHub Pages, 미국)으로 제공될 수 있습니다. 앱 코드는
+    해외 서버에서 제공되나, <b>건강 데이터 자체는 기기에만 저장되어 전송되지 않습니다</b>.
+    이에 대해 확인 부탁드립니다.</p>
+    <div class="row" style="margin-top:12px">
+      <button onclick="agree()">위 내용에 동의하고 시작</button>
+      <button class="ghost" onclick="decline()">동의하지 않음</button>
+    </div>
+  </div>
+</div>
+
+<header>
+  <h1>💊 복약 단골</h1>
+  <div class="h-sub">모든 기록은 이 폰에만 저장됩니다 — 서버 전송 없음</div>
+  <span class="badge">🔒 로컬 퍼스트 · 예산 0원</span>
+</header>
+<main>
+  <!-- 오늘 -->
+  <div id="tab-today">
+    <!-- 광고 슬롯 — 트래픽 확보 후 ENABLE_ADS=true + 애드핏/애드센스 코드 삽입.
+         정책(2026-11-21 법률·개인정보 검토): ①광고는 이 탭에만(병력·서류 등
+         민감정보 페이지 노출 금지 — 광고 네트워크의 맥락 수집으로 건강 상태
+         추정 방지) ②'광고' 구분 표기 필수(표시광고법) ③현재 비활성. -->
+    <div id="ad-slot-top" class="hidden" style="background:#16202f;border:1px dashed var(--line);border-radius:12px;min-height:90px;display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:12px;margin-bottom:12px">
+      광고
+    </div>
+    <section class="card">
+      <h2>오늘 복용</h2>
+      <div id="today-list"></div>
+      <button class="ghost small" onclick="checkAlarms()">🔔 알림 권한·테스트</button>
+    </section>
+    <section class="card">
+      <h2>다음 진료</h2>
+      <div id="next-visit"></div>
+    </section>
+  </div>
+  <!-- 약 관리 -->
+  <div id="tab-meds" class="hidden">
+    <section class="card">
+      <h2>복용약 등록</h2>
+      <label>약 이름</label><input id="m-name" placeholder="예) 혈압약 5mg">
+      <label>복용 시간 (여러 개 선택)</label>
+      <div class="row" id="time-chips"></div>
+      <label>메모</label><input id="m-note" placeholder="예) 식후 30분">
+      <p><button onclick="addMed()">약 등록</button></p>
+    </section>
+    <section class="card">
+      <h2>등록된 약</h2>
+      <ul class="med" id="med-list"></ul>
+    </section>
+  </div>
+  <!-- 일정 -->
+  <div id="tab-sched" class="hidden">
+    <section class="card">
+      <h2>진료 일정 추가</h2>
+      <label>병원 이름</label><input id="s-hosp" placeholder="예) ○○내과">
+      <label>일시</label><input id="s-date" type="datetime-local">
+      <label>메모</label><input id="s-note" placeholder="예) 혈압 검진">
+      <p><button onclick="addSched()">일정 등록</button></p>
+    </section>
+    <section class="card">
+      <h2>등록된 일정</h2>
+      <ul class="med" id="sched-list"></ul>
+    </section>
+  </div>
+  <!-- 서류 -->
+  <div id="tab-docs" class="hidden">
+    <section class="card">
+      <h2>처방전·진단서 보관함</h2>
+      <p class="muted">사진은 이 폰(IndexedDB)에만 저장됩니다. 보험 청구·상급기관 제출 전 원본을 지참하세요.</p>
+      <label>문서 종류</label>
+      <select id="d-type"><option>처방전</option><option>진단서</option><option>검사결과지</option><option>기타</option></select>
+      <label>병원·날짜 메모</label><input id="d-note" placeholder="예) ○○내과 11-21">
+      <label>사진</label><input id="d-file" type="file" accept="image/*" capture="environment">
+      <p><button onclick="addDoc()">서류 저장</button></p>
+    </section>
+    <section class="card">
+      <h2>보관함</h2>
+      <div id="doc-list"></div>
+    </section>
+  </div>
+  <!-- 병력 -->
+  <div id="tab-health" class="hidden">
+    <section class="card">
+      <h2>알레르기·기본 정보</h2>
+      <label>알레르기</label><textarea id="h-allergy" rows="2" placeholder="예) 페니실린"></textarea>
+      <label>기저질환·병력</label><textarea id="h-history" rows="3" placeholder="예) 고혈압(2020~)"></textarea>
+      <label>관심 건강 태그 (식단 지침 참조용 — 직접 선택)</label>
+      <div class="row" id="health-tags"></div>
+      <label>비상 연락</label><input id="h-contact" placeholder="보호자 연락처">
+      <p><button onclick="saveHealth()">저장</button></p>
+    </section>
+    <section class="card">
+      <h2>데이터 백업·복원</h2>
+      <p class="muted">기기 변경 대비 — 백업 파일은 본인이 보관하세요(클라우드 업로드 없음).</p>
+      <div class="row">
+        <button class="small" onclick="exportData()">백업 내보내기</button>
+        <label class="small ghost" style="border:1px solid var(--line);border-radius:10px;padding:8px 12px;cursor:pointer">복원<input type="file" id="imp-file" accept=".json" class="hidden" onchange="importData(this)"></label>
+      </div>
+    </section>
+  </div>
+  <!-- 식단 -->
+  <div id="tab-diet" class="hidden">
+    <section class="card" style="border-color:#3d5a80">
+      <h2>⚠️ 시작 전 확인 (법률 검토 반영 2026-11-21)</h2>
+      <p class="muted">①이 기능은 <b>의료기기가 아니며</b>, 진단·검사·치료 목적의 기능이
+      아닙니다. 표시되는 식단 정보는 공공기관 공개 지침의 <b>요약·참고용</b>이며, 의사·
+      영양사 등 전문가의 진료·영양 상담을 <b>대체하지 않습니다</b>.<br>
+      ②질환 태그는 회원님이 <b>직접 선택하는 일반 정보</b>입니다. 앱이 건강 상태를 진단·
+      판정하지 않습니다. 선택한 태그는 민감정보(건강정보)로 별도 동의 후 저장되며
+      언제든 삭제할 수 있습니다.<br>
+      ③식사 조절 중 어지러움·저혈당 증상 등 이상 반응이 있으면 <b>즉시 전문의와
+      상담</b>하고, 응급 상황에서는 119에 연락하십시오.</p>
+    </section>
+    <section class="card">
+      <h2>오늘 식단 기록</h2>
+      <label>끼니</label>
+      <select id="meal-slot"><option>아침</option><option>점심</option><option>저녁</option><option>간식</option></select>
+      <label>메모 (메뉴·양)</label><input id="meal-note" placeholder="예) 현미밥 반 공기, 생선구이">
+      <label>사진(선택)</label><input id="meal-file" type="file" accept="image/*" capture="environment">
+      <p><button onclick="addMeal()">기록 추가</button></p>
+    </section>
+    <section class="card">
+      <h2>최근 기록</h2>
+      <ul class="med" id="meal-list"></ul>
+    </section>
+    <section class="card">
+      <h2>내 태그 관련 일반 지침</h2>
+      <p class="muted">아래는 공개 기관의 <b>일반 정보</b>입니다. 개인 처방이 아닙니다.</p>
+      <div id="guide-list"></div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <button id="f-today" class="on" onclick="switchTab('today')">오늘</button>
+  <button id="f-meds" onclick="switchTab('meds')">약</button>
+  <button id="f-diet" onclick="switchTab('diet')">식단</button>
+  <button id="f-sched" onclick="switchTab('sched')">일정</button>
+  <button id="f-docs" onclick="switchTab('docs')">서류</button>
+  <button id="f-health" onclick="switchTab('health')">병력</button>
+</footer>
+
+<!-- 약 등록용 시간 칩은 스크립트에서 생성 -->
+<script>
+const LS='medapp_v1';
+const CONSENT_KEY='medapp_consent_v1';
+/* 민감정보 별도 동의 — 미동의 시 앱 잠금(개인정보보호법 제23조 대응) */
+function checkConsent(){
+  if(localStorage.getItem(CONSENT_KEY)==='yes'){$('consent').classList.remove('open');return true}
+  $('consent').classList.add('open');return false;
+}
+function agree(){localStorage.setItem(CONSENT_KEY,'yes');$('consent').classList.remove('open')}
+function decline(){
+  document.body.innerHTML='<div style="padding:40px;font-family:sans-serif;color:#e8eef7;background:#0e1420;min-height:100vh">'+
+  '<h2>동의가 필요합니다</h2><p style="color:#9db0c9;margin-top:12px">건강정보 동의 없이는 본 앱을 사용할 수 없습니다. '+
+  '동의를 원하시면 페이지를 새로고침하세요.</p></div>';
+}
+const TIMES=['아침','점심','저녁','취침 전','자유'];
+const HEALTH_TAGS=['고혈압','당뇨','고지혈증','신장질환','간질환','통풍','위장질환','갑상선'];
+/* 공인 기관 공개 지침 — 안정적 상위 페이지만 링크(개별 문서 링크는 변동 위험) */
+const GUIDES={
+ '고혈압':[['질병관리청 건강정보(고혈압)','https://health.kdca.go.kr/']],
+ '당뇨':[['대한당뇨병학회 교육자료','https://www.diabetes.or.kr/'],['질병관리청 건강정보','https://health.kdca.go.kr/']],
+ '고지혈증':[['질병관리청 건강정보(이상지질혈증)','https://health.kdca.go.kr/']],
+ '신장질환':[['질병관리청 건강정보','https://health.kdca.go.kr/']],
+ '간질환':[['질병관리청 건강정보','https://health.kdca.go.kr/']],
+ '통풍':[['질병관리청 건강정보','https://health.kdca.go.kr/']],
+ '위장질환':[['질병관리청 건강정보','https://health.kdca.go.kr/']],
+ '갑상선':[['질병관리청 건강정보','https://health.kdca.go.kr/']],
+ '공통':[['농촌진흥청 국가음식성분표','https://kfr.rda.go.kr/'],['식품안전나라','https://www.foodsafetykorea.go.kr/']]
+};
+/* 출처 표기 법률 요구: 기관명·링크·확인일 (식단 법률 검토 2026-11-21) */
+const GUIDE_CHECKED='2026-11-21';
+/* 광고 수익화 스위치 — 트래픽 확보 후 true로 전환(기본 광고 없음).
+   정책: 민감정보 페이지(병력·서류·식단) 노출 금지, '광고' 표기 필수. */
+const ENABLE_ADS=false;
+if(ENABLE_ADS){document.addEventListener('DOMContentLoaded',()=>{$('ad-slot-top').classList.remove('hidden')})}
+let DB={meds:[],sched:[],docs:[],health:{},taken:{},meals:[]};
+let curTab='today';
+
+function load(){try{DB=JSON.parse(localStorage.getItem(LS))||DB}catch(e){
+  // 손상 데이터를 초기화 전 백업 — 복구 가능하게(무조건 초기화 금지)
+  try{localStorage.setItem(LS+'_corrupt_backup_'+Date.now(),localStorage.getItem(LS))}catch(_){}
+  console.warn('데이터 손상 — 백업 후 초기화',e);
+  DB={meds:[],sched:[],docs:[],health:{},taken:{},meals:[]}
+}}
+function save(){try{localStorage.setItem(LS,JSON.stringify(DB))}catch(e){
+  // 저장 한도 초과·비공개 모드 등 — 데이터 유실을 막고 사용자에게 안내
+  alert('저장 공간 부족 — 사진 서류를 정리하거나 백업 후 재시도하세요');
+  console.error('localStorage 저장 실패',e);
+}}
+function $(id){return document.getElementById(id)}
+function esc(s){return (s||'').replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]))}
+
+/* ── 시간 칩 ── */
+function renderTimeChips(){
+  $('time-chips').innerHTML=TIMES.map((t,i)=>
+    `<button class="small ghost" data-t="${t}" onclick="toggleChip(this)">${t}</button>`).join('');
+}
+function toggleChip(btn){btn.style.background=btn.style.background?'':getComputedStyle(document.documentElement).getPropertyValue('--acc');btn.style.color=btn.style.background?'#04121f':''}
+function selectedTimes(){return [...document.querySelectorAll('#time-chips .small')].filter(b=>b.style.background).map(b=>b.dataset.t)}
+
+/* ── 탭 ── */
+function switchTab(t){curTab=t;['today','meds','diet','sched','docs','health'].forEach(x=>{
+  $('tab-'+x).classList.toggle('hidden',x!==t);
+  $('f-'+x).classList.toggle('on',x===t)});
+  renderAll()}
+
+/* ── 식단 ── */
+function renderTags(){
+  const sel=DB.health.tags||[];
+  $('health-tags').innerHTML=HEALTH_TAGS.map(t=>{
+    const on=sel.includes(t);
+    return `<button class="small ghost" data-tag="${t}" onclick="toggleTag(this)"
+      style="${on?'background:var(--acc);color:#04121f':''}">${t}</button>`}).join('');
+}
+function toggleTag(btn){
+  const t=btn.dataset.tag;const sel=DB.health.tags||[];
+  const i=sel.indexOf(t);
+  if(i>=0)sel.splice(i,1);else sel.push(t);
+  DB.health.tags=sel;save();
+  btn.style.background=i>=0?'':'var(--acc)';
+  btn.style.color=i>=0?'':'#04121f';
+  renderGuides();
+}
+function renderGuides(){
+  const sel=[...(DB.health.tags||[]),'공통'];
+  const items=[];
+  sel.forEach(t=>(GUIDES[t]||[]).forEach(g=>{
+    if(!items.some(x=>x[1]===g[1]))items.push(g)}));
+  $('guide-list').innerHTML=items.length?items.map(g=>
+    `<li class="med" style="list-style:none"><div><b>${esc(g[0])}</b>
+     <div class="muted">출처: ${esc(g[0])} 공개 자료(요약) · 확인일 ${GUIDE_CHECKED} — 개인 처방 아님</div></div>
+     <a class="small ghost" href="${g[1]}" target="_blank" rel="noopener"
+        style="text-decoration:none;border:1px solid var(--line);border-radius:10px;padding:8px 12px;color:var(--acc)">열기</a></li>`).join('')
+    :'<p class="muted">태그를 선택하면 관련 공개 지침이 표시됩니다.</p>';
+}
+function addMeal(){
+  const note=$('meal-note').value.trim();
+  if(!note){alert('메뉴·양을 메모로 남겨주세요');return}
+  DB.meals.push({id:Date.now(),slot:$('meal-slot').value,note,at:todayKey()});
+  save();$('meal-note').value='';renderMeals();
+}
+function delMeal(id){if(confirm('삭제할까요?')){DB.meals=DB.meals.filter(m=>m.id!==id);save();renderMeals()}}
+function renderMeals(){
+  const recent=[...DB.meals].sort((a,b)=>b.id-a.id).slice(0,10);
+  $('meal-list').innerHTML=recent.length?recent.map(m=>
+    `<li><div><b>${esc(m.slot)}</b> <span class="muted">${esc(m.at)}</span>
+     <div>${esc(m.note)}</div></div>
+     <button class="small ghost" onclick="delMeal(${m.id})">삭제</button></li>`).join('')
+    :'<p class="muted">기록이 없습니다.</p>';
+}
+
+/* ── 약 ── */
+function addMed(){
+  const name=$('m-name').value.trim(), times=selectedTimes();
+  if(!name||!times.length){alert('약 이름과 복용 시간을 선택하세요');return}
+  DB.meds.push({id:Date.now(),name,times,note:$('m-note').value.trim()});
+  save();$('m-name').value='';$('m-note').value='';
+  document.querySelectorAll('#time-chips .small').forEach(b=>{b.style.background='';b.style.color=''});
+  renderAll();
+}
+function delMed(id){if(confirm('삭제할까요?')){DB.meds=DB.meds.filter(m=>m.id!==id);save();renderAll()}}
+function renderMeds(){
+  $('med-list').innerHTML=DB.meds.length?DB.meds.map(m=>
+    `<li><div><b>${esc(m.name)}</b> <span class="pill">${m.times.map(esc).join(' · ')}</span>
+     ${m.note?`<div class="muted">${esc(m.note)}</div>`:''}</div>
+     <button class="small ghost" onclick="delMed(${m.id})">삭제</button></li>`).join('')
+    :'<p class="muted">등록된 약이 없습니다.</p>';
+}
+
+/* ── 오늘 복용 ── */
+function todayKey(){return new Date().toISOString().slice(0,10)}
+function renderToday(){
+  const tk=todayKey();const taken=DB.taken[tk]||[];
+  const rows=[];
+  DB.meds.forEach(m=>m.times.forEach(t=>{
+    const key=m.id+'|'+t;const done=taken.includes(key);
+    rows.push(`<li class="${done?'done':''}"><div><b>${esc(m.name)}</b> <span class="time-chip">${esc(t)}</span></div>
+      <button class="small" style="background:${done?'#22354f':''};color:${done?'var(--sub)':'#04121f'}" onclick="toggleTaken('${key}')">${done?'복용함':'복용'}</button></li>`);
+  }));
+  $('today-list').innerHTML=rows.length?rows.join(''):'<p class="muted">등록된 약이 없습니다. [약] 탭에서 추가하세요.</p>';
+}
+function toggleTaken(key){
+  const tk=todayKey();DB.taken[tk]=DB.taken[tk]||[];
+  const i=DB.taken[tk].indexOf(key);
+  if(i>=0)DB.taken[tk].splice(i,1);else DB.taken[tk].push(key);
+  save();renderToday();
+}
+
+/* ── 일정 ── */
+function addSched(){
+  const h=$('s-hosp').value.trim(),d=$('s-date').value;
+  if(!h||!d){alert('병원 이름과 일시를 입력하세요');return}
+  DB.sched.push({id:Date.now(),hosp:h,date:d,note:$('s-note').value.trim()});
+  save();$('s-hosp').value='';$('s-note').value='';renderAll();
+}
+function delSched(id){if(confirm('삭제할까요?')){DB.sched=DB.sched.filter(s=>s.id!==id);save();renderAll()}}
+function renderSched(){
+  const sorted=[...DB.sched].sort((a,b)=>a.date.localeCompare(b.date));
+  const future=sorted.filter(s=>s.date>=new Date().toISOString().slice(0,16));
+  $('next-visit').innerHTML=future.length?
+    `<li class="med" style="list-style:none"><div><b>${esc(future[0].hosp)}</b><div class="time-chip">${esc(future[0].date.replace('T',' '))}</div></div></li>`
+    + (future[0].note?`<p class="muted">${esc(future[0].note)}</p>`:'')
+    :'<p class="muted">예정된 진료가 없습니다.</p>';
+  $('sched-list').innerHTML=sorted.length?sorted.map(s=>
+    `<li><div><b>${esc(s.hosp)}</b><div class="time-chip">${esc(s.date.replace('T',' '))}</div>
+     ${s.note?`<div class="muted">${esc(s.note)}</div>`:''}</div>
+     <button class="small ghost" onclick="delSched(${s.id})">삭제</button></li>`).join('')
+    :'<p class="muted">등록된 일정이 없습니다.</p>';
+}
+
+/* ── 서류 (IndexedDB — 사진은 크므로) ── */
+let idb=null;
+function openIdb(){return new Promise(res=>{
+  const rq=indexedDB.open('medapp_docs',1);
+  rq.onupgradeneeded=e=>e.target.result.createObjectStore('docs',{keyPath:'id'});
+  rq.onsuccess=e=>res(e.target.result);
+})}
+async function addDoc(){
+  const f=$('d-file').files[0];
+  if(!f){alert('사진을 선택하세요');return}
+  const buf=await f.arrayBuffer();
+  const rec={id:Date.now(),type:$('d-type').value,note:$('d-note').value.trim(),
+             mime:f.type,data:buf,at:new Date().toISOString().slice(0,10)};
+  idb=idb||await openIdb();
+  await new Promise((res,rej)=>{const tx=idb.transaction('docs','readwrite');
+    tx.objectStore('docs').put(rec);tx.oncomplete=res;tx.onerror=rej});
+  $('d-file').value='';$('d-note').value='';
+  renderDocs();
+}
+async function renderDocs(){
+  idb=idb||await openIdb();
+  const docs=await new Promise(res=>{const rq=idb.transaction('docs').objectStore('docs').getAll();rq.onsuccess=()=>res(rq.result||[])});
+  docs.sort((a,b)=>b.id-a.id);
+  $('doc-list').innerHTML=docs.length?docs.map(d=>
+    `<section class="card" style="padding:10px;margin-bottom:10px">
+      <div class="row" style="justify-content:space-between"><b>${esc(d.type)}</b>
+      <button class="small ghost" onclick="delDoc(${d.id})">삭제</button></div>
+      <div class="muted">${esc(d.note)} · ${esc(d.at)}</div>
+      <img class="thumb" src="${URL.createObjectURL(new Blob([d.data],{type:d.mime}))}"></section>`).join('')
+    :'<p class="muted">보관된 서류가 없습니다.</p>';
+}
+async function delDoc(id){idb=idb||await openIdb();
+  await new Promise(res=>{const tx=idb.transaction('docs','readwrite');tx.objectStore('docs').delete(id);tx.oncomplete=res});
+  renderDocs();
+}
+
+/* ── 병력 ── */
+function saveHealth(){
+  DB.health={allergy:$('h-allergy').value,history:$('h-history').value,contact:$('h-contact').value};
+  save();alert('저장되었습니다 (이 폰에만)');
+}
+function renderHealth(){
+  $('h-allergy').value=DB.health.allergy||'';
+  $('h-history').value=DB.health.history||'';
+  $('h-contact').value=DB.health.contact||'';
+}
+
+/* ── 백업 ── */
+function exportData(){
+  const blob=new Blob([JSON.stringify(DB,null,1)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='복약단골_백업_'+todayKey()+'.json';a.click();
+}
+function importData(input){
+  const f=input.files[0];if(!f)return;
+  const rd=new FileReader();
+  rd.onload=()=>{try{DB=JSON.parse(rd.result);save();renderAll();alert('복원 완료')}catch(e){alert('파일 형식 오류')}};
+  rd.readAsText(f);
+}
+
+/* ── 알림 ── */
+function checkAlarms(){
+  if(!('Notification' in window)){alert('이 브라우저는 알림을 지원하지 않습니다');return}
+  Notification.requestPermission().then(p=>{
+    if(p==='granted'){
+      new Notification('알림이 켜졌습니다 💊',{body:'복용 시간에 알려드립니다 (앱을 열어둔 상태에서 동작)'});
+    } else alert('알림 권한이 거부되었습니다 — 설정에서 허용해 주세요');
+  });
+}
+setInterval(()=>{
+  if(Notification.permission!=='granted')return;
+  const now=new Date();const h=now.getHours(),m=now.getMinutes();
+  const slot=(h<11)?'아침':(h<16)?'점심':(h<21)?'저녁':'취침 전';
+  const tk=todayKey();const taken=DB.taken[tk]||[];
+  const pending=DB.meds.filter(md=>md.times.includes(slot)&&!taken.includes(md.id+'|'+slot));
+  if(pending.length&&m===0&&now.getSeconds()<5){
+    new Notification('💊 '+slot+' 복용 시간',{body:pending.map(m=>m.name).join(', ')});
+  }
+  // 진료 하루 전 알림
+  const tomorrow=new Date(Date.now()+864e5).toISOString().slice(0,10);
+  DB.sched.filter(s=>s.date.startsWith(tomorrow)).forEach(s=>{
+    new Notification('🏥 내일 진료 알림',{body:s.hosp+' — '+s.date.replace('T',' ')});
+  });
+},5000);
+
+/* ── 공통 ── */
+function renderAll(){renderToday();renderMeds();renderSched();renderDocs();renderHealth();renderTags();renderGuides();renderMeals()}
+load();renderTimeChips();renderAll();
+checkConsent();  /* 민감정보 별도 동의 확인 — 미동의 시 잠금 */
+
+/* PWA 등록 */
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>
