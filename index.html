@@ -3,40 +3,46 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>복약 단골 — 복용약·진료 관리</title>
-<meta name="description" content="복용약 알림·병원 일정·서류 보관 — 모든 데이터는 내 폰에만 저장됩니다.">
+<title>AI 건강 지킴이 — 복용약·진료·식단 관리</title>
+<meta name="description" content="복용약 알림·병원 일정·식단·서류 보관 — 모든 데이터는 내 폰에만 저장됩니다.">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0f4c81">
 <style>
-:root{--bg:#0e1420;--card:#16202f;--line:#233248;--fg:#e8eef7;--sub:#9db0c9;--acc:#4da3ff;--warn:#ffb84d;--ok:#5fd08a;--bad:#ff7a7a}
+:root{--bg:#f6f8fc;--card:#ffffff;--line:#e2e8f2;--fg:#1a2433;--sub:#5c6b80;--acc:#1663c7;--acc2:#0f4c81;--warn:#c77800;--ok:#2e9e64;--bad:#d9534f}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:"맑은 고딕","Apple SD Gothic Neo",sans-serif;background:var(--bg);color:var(--fg);min-height:100vh;padding-bottom:70px}
-header{padding:18px 16px 10px}
-h1{font-size:20px;font-weight:700}
+body{font-family:"맑은 고딕","Apple SD Gothic Neo",sans-serif;color:var(--fg);min-height:100vh;padding-bottom:70px;
+  background:linear-gradient(165deg,#fbfcff 0%,#eef3fa 46%,#e9eef7 100%);
+  background-attachment:fixed}
+body::before{content:"";position:fixed;top:-140px;left:50%;transform:translateX(-50%);
+  width:640px;height:340px;border-radius:50%;
+  background:radial-gradient(ellipse at center,rgba(22,99,199,.10),rgba(22,99,199,0) 68%);pointer-events:none}
+header{padding:20px 16px 12px}
+h1{font-size:21px;font-weight:800;letter-spacing:-.2px}
 .h-sub{color:var(--sub);font-size:12px;margin-top:4px}
-.badge{display:inline-block;background:#1d2c42;color:var(--acc);font-size:11px;padding:3px 8px;border-radius:20px;margin-top:8px}
+.badge{display:inline-block;background:#eaf2fc;color:var(--acc);border:1px solid #d4e3f8;font-size:11px;padding:3px 9px;border-radius:20px;margin-top:8px}
 main{padding:0 14px}
-section.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px;
+  box-shadow:0 1px 2px rgba(15,36,60,.05),0 10px 28px rgba(15,36,60,.05)}
 h2{font-size:15px;margin-bottom:10px;color:var(--fg)}
-.muted{color:var(--sub);font-size:12px;line-height:1.5}
+.muted{color:var(--sub);font-size:12px;line-height:1.55}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-input,select,textarea{background:#0c1220;border:1px solid var(--line);color:var(--fg);border-radius:10px;padding:10px;font-size:14px;width:100%}
-input:focus{outline:1px solid var(--acc)}
+input,select,textarea{background:#fbfdff;border:1px solid var(--line);color:var(--fg);border-radius:10px;padding:10px;font-size:14px;width:100%}
+input:focus,select:focus,textarea:focus{outline:1px solid var(--acc)}
 label{font-size:12px;color:var(--sub);display:block;margin:8px 0 4px}
-button{background:var(--acc);color:#04121f;border:0;border-radius:10px;padding:11px 16px;font-size:14px;font-weight:700;cursor:pointer;width:100%}
-button.ghost{background:transparent;color:var(--acc);border:1px solid var(--line);font-weight:500}
+button{background:linear-gradient(180deg,#2a77dc,#1663c7);color:#fff;border:0;border-radius:10px;padding:11px 16px;font-size:14px;font-weight:700;cursor:pointer;width:100%;box-shadow:0 2px 6px rgba(22,99,199,.22)}
+button.ghost{background:#fff;color:var(--acc);border:1px solid #cdd9ea;font-weight:600;box-shadow:none}
 button.small{width:auto;padding:8px 12px;font-size:12px}
 ul.med{list-style:none}
-ul.med li{display:flex;justify-content:space-between;align-items:center;background:#101a29;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px}
+ul.med li{display:flex;justify-content:space-between;align-items:center;background:#fbfdff;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
 .done{opacity:.45;text-decoration:line-through}
-.pill{font-size:11px;border-radius:14px;padding:2px 8px;background:#22354f;color:var(--acc)}
+.pill{font-size:11px;border-radius:14px;padding:2px 8px;background:#eaf2fc;color:var(--acc2);border:1px solid #d4e3f8}
 .time-chip{font-size:12px;color:var(--warn)}
-footer{position:fixed;bottom:0;left:0;right:0;background:#0b111c;border-top:1px solid var(--line);display:flex}
+footer{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-top:1px solid var(--line);display:flex}
 footer button{background:none;color:var(--sub);font-size:11px;font-weight:600;padding:10px 0;border-radius:0}
 footer button.on{color:var(--acc)}
-.dialog{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center}
+.dialog{position:fixed;inset:0;background:rgba(16,28,48,.45);display:none;align-items:flex-end;justify-content:center}
 .dialog.open{display:flex}
-.dialog>div{background:var(--card);width:100%;max-width:520px;border-radius:18px 18px 0 0;padding:16px;max-height:88vh;overflow:auto}
+.dialog>div{background:#fff;width:100%;max-width:520px;border-radius:18px 18px 0 0;padding:16px;max-height:88vh;overflow:auto}
 .thumb{max-width:100%;border-radius:10px;margin-top:8px;border:1px solid var(--line)}
 .hidden{display:none}
 </style>
@@ -77,7 +83,7 @@ footer button.on{color:var(--acc)}
 </div>
 
 <header>
-  <h1>💊 복약 단골</h1>
+  <h1>💊 AI 건강 지킴이</h1>
   <div class="h-sub">모든 기록은 이 폰에만 저장됩니다 — 서버 전송 없음</div>
   <span class="badge">🔒 로컬 퍼스트 · 예산 0원</span>
 </header>
